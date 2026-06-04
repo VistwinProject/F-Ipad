@@ -138,7 +138,7 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
                     attributeName="stroke-dashoffset"
                     from={len}
                     to={-len * 0.18}
-                    dur="1.4s"
+                    dur="2.2s"
                     repeatCount="indefinite"
                   />
                 </line>
