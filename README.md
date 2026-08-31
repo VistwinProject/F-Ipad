@@ -67,16 +67,20 @@ WS 連不上(或 `?sim=1`)時,歡迎頁 / 重置會退而求其次只切換本�
 三端一律以卡片資料的 `data.id` 路由,`slot_index` 只代表物理 reader 位置。9 個家電 `id` 在三端之間**固定不可更動**:
 
 ```
-door  ac  light  socket  curtain  sound  hrv  camera  sensor
+hrv  ac  dehum  purifier  sensor  light  socket  curtain  bathfan
 ```
 
-| id      | 名稱   | id        | 名稱   |
-| ------- | ------ | --------- | ------ |
-| hrv     | 新風機 | sound     | 音響   |
-| ac      | 冷氣   | light     | 燈     |
-| curtain | 窗簾   | door      | 門     |
-| socket  | 插座   | camera    | 攝影機 |
-|         |        | sensor    | 感測器 |
+| id       | 名稱         | id      | 名稱       |
+| -------- | ------------ | ------- | ---------- |
+| hrv      | 新風機       | light   | 燈         |
+| ac       | 冷氣         | socket  | 智慧插座   |
+| dehum    | 除濕機       | curtain | 窗簾       |
+| purifier | 空氣清淨機   | bathfan | 浴室暖風機 |
+| sensor   | 12合一感測器 |         |            |
+
+> `?sim=1` 的鍵盤 `1`–`9` 依上表由左而右、由上而下對應
+> （`1`=新風機、`2`=冷氣、`3`=除濕機 …… `9`=浴室暖風機），順序定義在
+> `src/lib/useNfcSync.js` 的 `SIM_IDS`。
 
 ## WS 訊息類型
 

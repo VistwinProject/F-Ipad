@@ -1,7 +1,8 @@
 // ── F 區 9 個家電(已 freeze 的 id 字串,三端不准改)─────────────────────────────
 // id 字串必須跟桌面 / 牆面完全一致:
-//   door / ac / light / socket / curtain / sound / hrv / camera / sensor
-// (camera / sensor 是第 8、9 個,對齊牆面 f-wall/src/config/appliances.js CAM-08 / SEN-09)
+//   hrv / ac / dehum / purifier / sensor / light / socket / curtain / bathfan
+// (對齊牆面 F-wall/src/config/appliances.js 的 status.code:
+//  HRV-02 / AC-07 / DH-01 / AP-06 / SEN-09 / LT-03 / PG-04 / CT-05 / BF-08)
 //
 // pos = 知識圖譜上的節點座標,正規化 0..1(x 右為正、y 下為正)。
 // ⚠️ 目前是「均衡圖譜佈局」placeholder。等拿到空間平面渲染圖 + 各家電實際位置後,
@@ -61,8 +62,8 @@ export const APPLIANCES = [
   },
   {
     id: 'socket',
-    label: '插座',
-    sub: '智慧插座',
+    label: '智慧插座',
+    sub: '智慧電力監測',
     pos: { x: 0.74, y: 0.76 },
     detail: {
       metric: '負載功率',
@@ -76,18 +77,19 @@ export const APPLIANCES = [
     },
   },
   {
-    id: 'sound',
-    label: '音響',
-    sub: '音響系統',
+    id: 'purifier',
+    label: '空氣清淨機',
+    sub: '空氣淨化',
     pos: { x: 0.36, y: 0.53 },
     detail: {
-      metric: '播放時數',
-      unit: 'hr',
-      today: { label: '今日播放', value: 3.4, deltaPct: 22, deltaColor: 'neutral' },
-      month: { label: '本月累積播放', value: 86.2, target: 120 },
+      metric: '用電量',
+      unit: 'kWh',
+      today: { label: '今日用電量', value: 8.2, deltaPct: -4, deltaColor: 'good' },
+      month: { label: '本月累積用電量', value: 236.5, target: 350 },
       maint: [
-        { id: 'fw', name: '韌體更新', last: '2026/05/05', next: '2026/06/05', status: 'warn', label: '有新版' },
-        { id: 'cal', name: '聲學校正', last: '2026/02/10', next: '2026/08/10', status: 'ok', label: '正常' },
+        { id: 'hepa', name: 'HEPA 濾網更換', last: '2026/05/08', next: '2026/06/08', status: 'warn', label: '即將到期' },
+        { id: 'pre', name: '前置濾網清潔', last: '2026/05/22', next: '2026/07/22', status: 'ok', label: '正常' },
+        { id: 'calib', name: '感測器校正', last: '2026/03/18', next: '2026/09/18', status: 'ok', label: '正常' },
       ],
     },
   },
@@ -108,43 +110,43 @@ export const APPLIANCES = [
     },
   },
   {
-    id: 'door',
-    label: '門',
-    sub: '智慧門鎖',
+    id: 'dehum',
+    label: '除濕機',
+    sub: '除濕系統',
     pos: { x: 0.1, y: 0.82 },
     detail: {
-      metric: '感應記錄',
-      unit: '次',
-      today: { label: '今日感應次數', value: 24, deltaPct: 18, deltaColor: 'neutral' },
-      month: { label: '本月累積感應', value: 392, target: 600 },
+      metric: '用電量',
+      unit: 'kWh',
+      today: { label: '今日用電量', value: 12.4, deltaPct: -6, deltaColor: 'good' },
+      month: { label: '本月累積用電量', value: 342.8, target: 500 },
       maint: [
-        { id: 'battery', name: '電池檢查', last: '2026/04/10', next: '2026/07/10', status: 'ok', label: '正常' },
-        { id: 'sensor', name: '感應器校正', last: '2026/03/22', next: '2026/06/22', status: 'warn', label: '即將到期' },
-        { id: 'lock', name: '鎖具檢查', last: '2026/05/01', next: '2026/11/01', status: 'ok', label: '正常' },
+        { id: 'filter', name: '濾網清潔', last: '2026/05/16', next: '2026/06/16', status: 'warn', label: '即將到期' },
+        { id: 'tank', name: '水箱清潔', last: '2026/04/28', next: '2026/07/28', status: 'ok', label: '正常' },
+        { id: 'comp', name: '壓縮機檢查', last: '2026/03/12', next: '2026/09/12', status: 'ok', label: '正常' },
       ],
     },
   },
   {
-    id: 'camera',
-    label: '攝影機',
-    sub: '安防監控',
+    id: 'bathfan',
+    label: '浴室暖風機',
+    sub: '浴室暖風乾燥',
     pos: { x: 0.2, y: 0.6 },
     detail: {
-      metric: '錄影時數',
+      metric: '運轉時數',
       unit: 'hr',
-      today: { label: '今日錄影', value: 24, deltaPct: 0, deltaColor: 'neutral' },
-      month: { label: '本月累積錄影', value: 712, target: 1000 },
+      today: { label: '今日運轉', value: 2.6, deltaPct: 10, deltaColor: 'neutral' },
+      month: { label: '本月累積運轉', value: 68.4, target: 100 },
       maint: [
-        { id: 'lens', name: '鏡頭清潔', last: '2026/05/12', next: '2026/06/12', status: 'warn', label: '即將到期' },
-        { id: 'storage', name: '儲存檢查', last: '2026/04/05', next: '2026/07/05', status: 'ok', label: '正常' },
-        { id: 'motion', name: '位移偵測校正', last: '2026/03/18', next: '2026/09/18', status: 'ok', label: '正常' },
+        { id: 'filter', name: '濾網清潔', last: '2026/05/14', next: '2026/06/14', status: 'warn', label: '即將到期' },
+        { id: 'fan', name: '風扇檢查', last: '2026/04/02', next: '2026/07/02', status: 'ok', label: '正常' },
+        { id: 'heater', name: '加熱元件檢查', last: '2026/02/26', next: '2026/08/26', status: 'ok', label: '正常' },
       ],
     },
   },
   {
     id: 'sensor',
-    label: '感測器',
-    sub: '環境感測',
+    label: '12合一感測器',
+    sub: '12合一環境感測',
     pos: { x: 0.46, y: 0.82 },
     detail: {
       metric: '偵測次數',
@@ -163,21 +165,22 @@ export const APPLIANCE_BY_ID = Object.fromEntries(APPLIANCES.map((a) => [a.id, a
 
 // ── 知識圖譜關聯邊(AI 推理 / 設備連動關係)──────────────────────────────────────
 // from/to 為家電 id;label 描述 AI 大腦看到的連動邏輯。
-// 只有「兩端都 active」的邊才會連起來;當 7 個全 active → 全圖串聯動畫。
+// 只有「兩端都 active」的邊才會連起來;當 9 個全 active → 全圖串聯動畫。
 export const EDGES = [
-  { from: 'door', to: 'ac', label: '進門啟動空調' },
-  { from: 'door', to: 'light', label: '進門開燈' },
-  { from: 'door', to: 'hrv', label: '進門換氣' },
   { from: 'ac', to: 'hrv', label: '溫控 × 換氣聯動' },
   { from: 'ac', to: 'curtain', label: '日照負載調節' },
+  { from: 'ac', to: 'dehum', label: '溫濕協同控制' },
   { from: 'light', to: 'curtain', label: '採光補光' },
   { from: 'light', to: 'socket', label: '照明供電' },
-  { from: 'socket', to: 'sound', label: '插座供電音響' },
   { from: 'curtain', to: 'hrv', label: '通風連動' },
-  { from: 'door', to: 'camera', label: '門口安防連動' },
-  { from: 'camera', to: 'light', label: '偵測補光' },
+  { from: 'hrv', to: 'purifier', label: '換氣 × 淨化協同' },
+  { from: 'socket', to: 'dehum', label: '插座供電監測' },
   { from: 'sensor', to: 'hrv', label: '空氣品質換氣' },
   { from: 'sensor', to: 'ac', label: '溫濕連動控溫' },
+  { from: 'sensor', to: 'dehum', label: '濕度連動除濕' },
+  { from: 'sensor', to: 'purifier', label: 'PM2.5 連動淨化' },
+  { from: 'bathfan', to: 'hrv', label: '浴室排氣連動' },
+  { from: 'bathfan', to: 'sensor', label: '濕度偵測啟動' },
 ]
 
 export const APPLIANCE_COUNT = APPLIANCES.length

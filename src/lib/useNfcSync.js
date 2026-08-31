@@ -18,7 +18,8 @@ const SLOT_COUNT = 9
 
 // Dev 模擬模式 — 只在網址帶 ?sim=1 時啟用(展演硬體未接時用鍵盤驗證視覺)。
 const SIM_MODE = new URLSearchParams(location.search).get('sim') === '1'
-const SIM_IDS = ['hrv', 'ac', 'curtain', 'socket', 'sound', 'light', 'door', 'camera', 'sensor']
+// 順序＝鍵盤 1–9 的對應,依展場家電清單排列。
+const SIM_IDS = ['hrv', 'ac', 'dehum', 'purifier', 'sensor', 'light', 'socket', 'curtain', 'bathfan']
 
 const emptySlot = () => ({ connected: false, readerName: '', activeCard: null })
 
