@@ -274,9 +274,9 @@ html, body {
 }
 .acard--l { left: 2%; }
 .acard--r { right: 2%; flex-direction: row-reverse; text-align: right; }
-.acard--active { cursor: pointer; border-color: var(--c-border-2);
+.acard--active { cursor: pointer; border-color: var(--accent);
   background: var(--c-surface-2);
-  box-shadow: 0 0 22px -6px rgba(103, 179, 254, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+  box-shadow: var(--shadow-1); }
 .acard__icon {
   flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px;
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--c-border);
