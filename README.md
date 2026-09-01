@@ -16,8 +16,33 @@
 ## 技術棧
 
 - Vite 5 + React 18
-- framer-motion 11(光束、邊線繪入、完成浮層動畫)
+- framer-motion 11(只用於進出場:邊線繪入、卡片浮出)
 - 原生 WebSocket(無額外 client 函式庫)
+
+## 配色 / 設計 token
+
+極簡黑灰白透明（樣本版），token 定義在 `src/style.css` 的 `:root`，三端共用同一組
+名稱與數值（牆面因為是 JS 餵給 SVG，同一份在 `F-wall/src/config/theme.js`）。
+
+| 用途 | token | 值 |
+| --- | --- | --- |
+| 背景 | `--c-bg` | `#000000` |
+| hairline / idle 線 | `--c-border` | `rgba(255,255,255,0.10)` |
+| 面板外框 / 節點 idle | `--c-border-2` | `rgba(255,255,255,0.22)` |
+| active 白高光 | `--accent` | `rgba(255,255,255,0.85)` |
+| 文字三階 | `--c-text` / `--c-text-mute` / `--c-text-dim` | `0.95` / `0.62` / `0.38` |
+
+⚠ 變數名稱刻意沿用舊的（`--accent` 等），只換值，這樣元件不用改就跟著換皮。
+
+狀態色（`--green` / `--amber` / `--red`）樣本階段一併走無彩：保養狀態靠
+「即將到期」四個字 + 反白藥丸表達，連線狀態靠圓點實心 / 空心。要開回功能色，
+改 `:root` 裡註解好的那三行。
+
+⚠ `public/floorplan.svg` 是用 `<img>` 載入的，外部 CSS 打不到它，配色寫在
+SVG 檔案內的 `<defs><style>`。要改平面圖顏色請改那個檔，不是 `style.css`。
+
+字體：Latin / 數字走系統字並開 `tabular-nums`；CJK 用 Chiron Hei HK（CDN），
+離線時退到 `PingFang TC` / 微軟正黑體。
 
 ## 安裝與啟動
 
@@ -98,7 +123,7 @@ src/
   lib/useNfcSync.js        WS 客戶端 hook:維護 9 slot、聚合 activeIds、session 同步、sim 模式
   data/appliances.js       9 家電設定、座標、關聯邊、詳情資料(用電 / 累積 / 預測保養)
   components/
-    GraphCanvas.jsx        知識圖譜:中樞光束、周邊卡片 + leader 線、全串聯 mesh 與完成浮層
+    GraphCanvas.jsx        知識圖譜:平面圖底圖、9 節點、中樞、周邊卡片 + leader 線、真實關聯邊與完成浮層
     DetailCard.jsx         點節點 / 卡片彈出的家電詳情浮層
     StatusBar.jsx          頂部狀態列(連線、已連結數)
     WelcomeScreen.jsx      歡迎頁浮層(點擊進場)

@@ -2,13 +2,16 @@
   <!-- 假平面圖 — 示意用。等真實渲染圖到位後換掉此檔 + 調 appliances.js 的 pos。 -->
   <defs>
     <style>
-      .wall   { stroke: rgba(77,186,186,0.55); stroke-width: 3; }
-      .inner  { stroke: rgba(77,186,186,0.30); stroke-width: 2; }
-      .win    { stroke: rgba(0,220,220,0.85); stroke-width: 3; }
-      .floor  { fill: rgba(0,147,147,0.045); }
-      .floor2 { fill: rgba(0,147,147,0.075); }
-      .lbl    { fill: rgba(180,210,210,0.45); font-family: 'Chiron Hei HK', sans-serif; font-size: 20px; letter-spacing: 2px; }
-      .door   { stroke: rgba(77,186,186,0.40); stroke-width: 1.5; }
+      /* ⚠ 這個檔案是用 &lt;img&gt; 載入的（GraphCanvas），外部 CSS 完全打不到，
+         所以配色必須寫在檔案裡。要換色改這裡，不是改 style.css。
+         極簡版：全部白色不同透明度的 hairline，牆比隔間亮一階、窗最亮。 */
+      .wall   { stroke: rgba(255,255,255,0.28); stroke-width: 1.5; }
+      .inner  { stroke: rgba(255,255,255,0.14); stroke-width: 1; }
+      .win    { stroke: rgba(255,255,255,0.45); stroke-width: 1.5; }
+      .floor  { fill: rgba(255,255,255,0.015); }
+      .floor2 { fill: rgba(255,255,255,0.03); }
+      .lbl    { fill: rgba(255,255,255,0.30); font-family: -apple-system, 'Chiron Hei HK', 'PingFang TC', sans-serif; font-size: 20px; letter-spacing: 2px; }
+      .door   { stroke: rgba(255,255,255,0.14); stroke-width: 1; }
     </style>
   </defs>
 

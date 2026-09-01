@@ -33,10 +33,8 @@ function DetailBody({ appliance }) {
   return (
     <>
       <h2 className="detail__title">
-        <span className="detail__brace">[</span>
         {appliance.label}
         <span className="detail__sub">{appliance.sub}</span>
-        <span className="detail__brace">]</span>
       </h2>
 
       <section className="dcard">

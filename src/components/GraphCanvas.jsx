@@ -45,40 +45,12 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
     [activeIds]
   )
 
-  // 全串聯時的神經網:所有節點兩兩相連(放在底層當密集網格)。
-  const meshEdges = useMemo(() => {
-    if (!allLinked) return []
-    const out = []
-    for (let i = 0; i < APPLIANCES.length; i++) {
-      for (let j = i + 1; j < APPLIANCES.length; j++) {
-        out.push([APPLIANCES[i], APPLIANCES[j]])
-      }
-    }
-    return out
-  }, [allLinked])
-
   return (
     <div className="graph">
      <div className="graph__plan">
       <img className="graph__bg" src="/floorplan.svg" alt="" draggable="false" />
 
       <svg className="graph__edges" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <defs>
-          <filter id="edge-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="0.6" />
-          </filter>
-        </defs>
-
-        {/* 底層:全串聯神經網 */}
-        {meshEdges.map(([a, b], i) => (
-          <line
-            key={`mesh-${i}`}
-            x1={a.pos.x * 100} y1={a.pos.y * 100}
-            x2={b.pos.x * 100} y2={b.pos.y * 100}
-            className="edge-mesh"
-          />
-        ))}
-
         {/* leader:周邊卡片 → 節點 */}
         {cards.map(({ a, anchorX, cardY }) => (
           <line
@@ -115,11 +87,6 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
           const len = Math.hypot(x2 - x1, y2 - y1)
           return (
             <g key={`${e.from}-${e.to}`}>
-              <line
-                x1={x1} y1={y1} x2={x2} y2={y2}
-                className={`edge-halo${allLinked ? ' edge-halo--linked' : ''}`}
-                filter="url(#edge-glow)"
-              />
               <motion.line
                 x1={x1} y1={y1} x2={x2} y2={y2}
                 className="edge-core"
@@ -128,21 +95,6 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
                 animate={{ strokeDashoffset: 0 }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               />
-              {allLinked && (
-                <line
-                  x1={x1} y1={y1} x2={x2} y2={y2}
-                  className="edge-flow"
-                  strokeDasharray={`${Math.max(3, len * 0.18)} ${len}`}
-                >
-                  <animate
-                    attributeName="stroke-dashoffset"
-                    from={len}
-                    to={-len * 0.18}
-                    dur="2.2s"
-                    repeatCount="indefinite"
-                  />
-                </line>
-              )}
             </g>
           )
         })}
@@ -153,22 +105,9 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
         className={`hub${activeIds.size > 0 ? ' hub--awake' : ''}${allLinked ? ' hub--linked' : ''}`}
         style={{ left: `${HUB.x}%`, top: `${HUB.y}%` }}
       >
-        <span className="hub__ring hub__ring--1" />
-        <span className="hub__ring hub__ring--2" />
         <span className="hub__core" />
         <span className="hub__label">AI<br />大腦</span>
       </div>
-
-      {/* 全屋串聯完成的中心擴散光環 */}
-      {allLinked && (
-        <motion.div
-          className="graph__burst"
-          initial={{ scale: 0.2, opacity: 0.8 }}
-          animate={{ scale: 2.4, opacity: 0 }}
-          transition={{ duration: 2.6, ease: 'easeOut' }}
-          key="burst"
-        />
-      )}
 
       {/* 節點(圖上發光點,名稱由周邊卡片承載)*/}
       {APPLIANCES.map((a) => {
@@ -182,7 +121,6 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
             style={{ left: `${a.pos.x * 100}%`, top: `${a.pos.y * 100}%` }}
             onClick={() => isActive && onPick(a.id)}
           >
-            <span className="node__halo" />
             <span className="node__dot" />
           </button>
         )
