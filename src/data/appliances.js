@@ -36,7 +36,7 @@ export const APPLIANCES = [
     id: 'ac',
     label: '冷氣',
     sub: '空調系統',
-    pos: { x: 0.3253, y: 0.3637 }, // 客廳 — 主空間空調
+    pos: { x: 0.3075, y: 0.3606 }, // 客廳 — 主空間空調
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -69,7 +69,7 @@ export const APPLIANCES = [
     id: 'socket',
     label: '智慧插座',
     sub: '智慧電力監測',
-    pos: { x: 0.2078, y: 0.6609 }, // 次臥 — 書桌側電力監測
+    pos: { x: 0.2106, y: 0.6154 }, // 次臥 — 書桌側電力監測
     detail: {
       metric: '負載功率',
       unit: 'W',
@@ -118,7 +118,7 @@ export const APPLIANCES = [
     id: 'dehum',
     label: '除濕機',
     sub: '除濕系統',
-    pos: { x: 0.6282, y: 0.7053 }, // 主臥 — 臥室除濕
+    pos: { x: 0.6276, y: 0.7413 }, // 主臥 — 臥室除濕
     detail: {
       metric: '用電量',
       unit: 'kWh',
