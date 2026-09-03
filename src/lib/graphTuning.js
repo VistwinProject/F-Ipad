@@ -27,6 +27,15 @@ export const DEFAULTS = {
   //   要一起改就改這兩行。（原本是 PARAMS.line.width / PARAMS.beam.width＝0.013542）
   lineWidth: 0.008,               // 節點外圈／關聯邊的線粗（世界寬比例）
   beamWidth: 0.011,               // 家電 → 中樞 的光束線粗（世界寬比例）
+  // 亮芯的最小像素寬。⚠ 這是 iPad 專屬的：牆面與桌面不帶（＝ 1.0）。
+  //   線細到亮芯不足 2px，又是【任意角度】時，bloom 的峰值門檻會被亞像素對位
+  //   打成一節一節的光暈 —— 近水平的四條邊（sensor–ac 0.5°、socket–dehum 4.3°、
+  //   light–curtain 10°、sensor–hrv 10.4°）最明顯。牆面的格線是水平垂直的，
+  //   沿線相位不變，所以牆面沒有這個症狀。完整推導在 glow/shaders.js 的 ridge()。
+  //   2.0 是實測掃出來的：1.0 時光暈起伏 0.85，1.5 掉到 0.28，2.0 是 0.22（最低），
+  //   再往上只會讓線變粗變亮。代價是亮帶從 3.7px 變成 7.8px、光暈亮度約 2 倍 ——
+  //   在現場的 iPad 上覺得太胖就用面板（鍵盤 e）往 1.5 調，症狀一樣是治好的。
+  minCorePx: 2.0,
   ringR: 6,                       // 節點外圈半徑（px）
   hubR: 35,                       // 中樞環半徑（px）。⚠ 光束的終點也退這個距離（見 GraphCanvas 的 hubClear）
   dotSize: 6,                     // 節點白點直徑（px，active）
@@ -57,7 +66,7 @@ export function isTuned(t) {
   if (!t) return false
   if (t.hub) return true
   if (Object.keys(t.nodes || {}).length) return true
-  return ['lineWidth', 'beamWidth', 'ringR', 'hubR', 'dotSize']
+  return ['lineWidth', 'beamWidth', 'ringR', 'hubR', 'dotSize', 'minCorePx']
     .some((k) => Math.abs(t[k] - DEFAULTS[k]) > 1e-9)
 }
 
@@ -79,6 +88,13 @@ export function exportTuning(t, HUB) {
     L.push(`//    FX.beam.width  = ${r3(t.beamWidth * 1920)}   // 目前 ${r3(DEFAULTS.beamWidth * 1920)}`)
     L.push('//    ⚠ 這會同時改變牆面與桌面的線粗 —— 那正是「三端統一」的意思。')
     L.push('//      只想動 iPad 的話改 buildGlow 裡的 width，但三端就會分家。')
+    L.push('')
+  }
+
+  if (Math.abs(t.minCorePx - DEFAULTS.minCorePx) > 1e-9) {
+    L.push('// 1b) 亮芯最小像素寬 → F-Ipad/src/lib/graphTuning.js 的 DEFAULTS')
+    L.push(`//    minCorePx: ${r3(t.minCorePx)},   // 目前 ${DEFAULTS.minCorePx}`)
+    L.push('//    ⚠ 只影響 iPad。太小＝光暈一節一節，太大＝線糊掉。')
     L.push('')
   }
 

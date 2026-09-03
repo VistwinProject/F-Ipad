@@ -111,28 +111,31 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
     for (const a of APPLIANCES) {
       const p = at(a)
       // ⚠ 順序＝流動方向:家電 → 中樞,與牆面的走線同向(資料流進 AI 大腦)。
-      beams.push({ id: `beam-${a.id}`, pts: [p, hubClear(p)], width: tune.beamWidth })
+      beams.push({ id: `beam-${a.id}`, pts: [p, hubClear(p)], width: tune.beamWidth, minCorePx: tune.minCorePx })
       // 節點外圈:貼在 .node__dot 外面一圈(預設白點 20px、環半徑 11px)。
-      lines.push({ id: `ring-${a.id}`, pts: circlePoints(p.x, p.y, tune.ringR * s), closed: true, width: tune.lineWidth })
+      lines.push({ id: `ring-${a.id}`, pts: circlePoints(p.x, p.y, tune.ringR * s), closed: true, width: tune.lineWidth, minCorePx: tune.minCorePx })
     }
     // 關聯邊:兩端皆 active 時亮起。沒有彗星 —— 那是「關係」不是「資料流」。
+    // ⚠ minCorePx 對這幾條最要緊:它們是【任意角度】的直線,亮芯不夠寬時
+    //   bloom 會被亞像素對位切成一節一節(見 glow/shaders.js 的 ridge())。
     for (const e of EDGES) {
       lines.push({
         id: `edge-${e.from}-${e.to}`,
         pts: [at(APPLIANCE_BY_ID[e.from]), at(APPLIANCE_BY_ID[e.to])],
         width: tune.lineWidth,
+        minCorePx: tune.minCorePx,
       })
     }
     // 中樞環:與 .hub__core 那圈 hairline 疊在一起(預設 46px → 半徑 23)。
-    lines.push({ id: 'hub', pts: circlePoints(hubP.x, hubP.y, tune.hubR * s), closed: true, width: tune.lineWidth })
+    lines.push({ id: 'hub', pts: circlePoints(hubP.x, hubP.y, tune.hubR * s), closed: true, width: tune.lineWidth, minCorePx: tune.minCorePx })
     return { lines, beams }
-  }, [hub, posOf, tune.beamWidth, tune.lineWidth, tune.ringR, tune.hubR])
+  }, [hub, posOf, tune.beamWidth, tune.lineWidth, tune.ringR, tune.hubR, tune.minCorePx])
 
   // 幾何是烤進 ribbon 頂點的,調參之後要讓發光層重建場景 —— 見 GlowLayer 的 rebuildKey。
   const glowKey = useMemo(
-    () => [tune.lineWidth, tune.beamWidth, tune.ringR, tune.hubR, hub.x, hub.y,
+    () => [tune.lineWidth, tune.beamWidth, tune.ringR, tune.hubR, tune.minCorePx, hub.x, hub.y,
            APPLIANCES.map((a) => `${posOf(a).x},${posOf(a).y}`).join('|')].join(';'),
-    [tune.lineWidth, tune.beamWidth, tune.ringR, tune.hubR, hub, posOf]
+    [tune.lineWidth, tune.beamWidth, tune.ringR, tune.hubR, tune.minCorePx, hub, posOf]
   )
 
   return (

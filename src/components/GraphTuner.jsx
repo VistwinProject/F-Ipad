@@ -20,6 +20,9 @@ const SLIDERS = [
   ['ringR', '節點外圈半徑', 4, 40, 1, (v) => `${v} px`],
   ['hubR', '中樞環半徑', 8, 80, 1, (v) => `${v} px`],
   ['dotSize', '節點白點直徑', 6, 40, 1, (v) => `${v} px`],
+  // ⚠ 只影響 iPad。太小＝近水平的邊光暈會一節一節，太大＝線開始糊。
+  //   為什麼會一節一節寫在 glow/shaders.js 的 ridge()。
+  ['minCorePx', '亮芯最小寬（治光暈斷續）', 1, 5, 0.1, (v) => `${v} px`],
 ]
 
 export default function GraphTuner({ tune, setTune, planRef, hub, onClose }) {
