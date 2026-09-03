@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { attachSimKeys } from '../shared/simKeys.js'
 
 // ── WS endpoint ───────────────────────────────────────────────────────────────
 // 依 F 區 SYNC-SPEC：WS server 固定 listen :8787,跑在「接 NFC reader 的那台 PC」。
@@ -16,10 +17,11 @@ const WS_URL = resolveWsUrl()
 const RECONNECT_MS = 3000
 const SLOT_COUNT = 9
 
-// Dev 模擬模式 — 只在網址帶 ?sim=1 時啟用(展演硬體未接時用鍵盤驗證視覺)。
-const SIM_MODE = new URLSearchParams(location.search).get('sim') === '1'
-// 順序＝鍵盤 1–9 的對應,依展場家電清單排列。
-const SIM_IDS = ['hrv', 'ac', 'dehum', 'purifier', 'sensor', 'light', 'socket', 'curtain', 'bathfan']
+// ⚠ 鍵盤模擬 NFC 不在這裡。舊版在這個檔案裡自己造假狀態（?sim=1）,
+//   但那樣【只有平板會亮】,看不出三端同步 —— 而三端同步正是要驗的東西。
+//   現在鍵盤只是把按鍵送給 server（見 shared/simKeys.js）,由 server 走跟
+//   真實讀卡機完全相同的那條路廣播出去。開關在 server：npm run sim。
+//   九台的順序（鍵盤 1–9 的對應）也移到 server 的 SIM_IDS。
 
 const emptySlot = () => ({ connected: false, readerName: '', activeCard: null })
 
@@ -122,40 +124,15 @@ export function useNfcSync() {
   }, [])
 
   useEffect(() => {
-    // ── Dev 模擬模式(?sim=1):不連 WS,用鍵盤 1–9 切換 9 個家電,0 清空。──
-    // 純展演硬體未接時驗證視覺用;沒有 ?sim=1 不會啟動。
-    if (SIM_MODE) {
-      setStatus('connected')
-      SIM_IDS.forEach((_, i) => handleMessage({ type: 'reader-connected', slot_index: i, reader: `SIM-${i}` }))
-      const on = new Set()
-      const onKey = (e) => {
-        if (e.key === '0') {
-          on.forEach((i) => handleMessage({ type: 'tag-remove', slot_index: i }))
-          on.clear()
-          return
-        }
-        const n = parseInt(e.key, 10)
-        if (!(n >= 1 && n <= SIM_IDS.length)) return
-        const i = n - 1
-        const id = SIM_IDS[i]
-        if (on.has(i)) {
-          on.delete(i)
-          handleMessage({ type: 'tag-remove', slot_index: i })
-        } else {
-          on.add(i)
-          handleMessage({ type: 'tag-present', slot_index: i, uid: `SIM${id}`, known: true, data: { id, label: id } })
-        }
-      }
-      window.addEventListener('keydown', onKey)
-      return () => window.removeEventListener('keydown', onKey)
-    }
-
     connect()
+    // ?sim：鍵盤送給 server，由它廣播真的 tag-present → 三端一起亮。
+    const detach = attachSimKeys(() => wsRef.current)
     return () => {
+      detach()
       clearTimeout(timerRef.current)
       try { wsRef.current?.close() } catch (_) {}
     }
-  }, [connect, handleMessage])
+  }, [connect])
 
   // ── 家電視圖(以 data.id 聚合 9 個 slot)──────────────────────────────────────
   // activeIds: 目前在感應區、且為已註冊家電的 id 集合。

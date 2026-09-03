@@ -14,11 +14,16 @@
   --amber:       rgba(255, 255, 255, 0.62);
   --red:         rgba(255, 255, 255, 0.62);
 
-  --beam:        rgba(255, 255, 255, 0.85);
-  --beam-soft:   rgba(255, 255, 255, 0.10);
+  /* 走線的顏色已經全部移到下面的 --glow-* 那一組（＝牆面的 FX.color）。
+     --beam / --beam-soft 留著只是為了不讓舊的 debug 覆寫失效，已經沒有選擇器在用。 */
+  --beam:        var(--glow-core);
+  --beam-soft:   var(--glow-dim);
   --highlight:   rgba(255, 255, 255, 0.95);
 
-  --c-bg:        #000000;
+  /* ⚠ 與 F-wall 的 styles.css / config/fx.js 的 FX.bg 同值。牆面的毛玻璃與淡藍
+     光暈都是照著這個底調的 —— 換回純黑的話玻璃會退化成一塊平的灰。
+     要退回舊的純黑版，只改這一行 #000000 即可。 */
+  --c-bg:        #16181D;
   --c-surface:   rgba(255, 255, 255, 0.04);
   --c-surface-2: rgba(255, 255, 255, 0.08);
   --c-border:    rgba(255, 255, 255, 0.10);
@@ -27,9 +32,43 @@
   --c-text-mute: rgba(255, 255, 255, 0.62);
   --c-text-dim:  rgba(255, 255, 255, 0.38);
 
-  /* 陰影分層 —— 用陰影表達層級，不用發光 */
+  /* 陰影分層 —— 用陰影表達層級 */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  /* GLOW-TOKENS:BEGIN — 以下到 END 之間由 F-wall/src/config/fx.js 的 SHARED 產生。
+     ⚠ 不要手改，下次同步會被蓋掉。要調淡藍色／光暈／玻璃濃度，
+        改 SHARED 之後在 /Users/chunming/F 底下跑 `node sync-tokens.mjs`。 */
+  /* ── 光：淡藍發光線段 ── */
+  --wall-bg:          #16181D;
+  --glow:             #A0D8FF;
+  --glow-core:        #DCEFFF;
+  --glow-beam:        #7FE3FF;
+  --glow-deep:        #1B4FA8;
+  --glow-head:        #FFFFFF;
+  --glow-rim:         rgba(220, 239, 255, 0.6);
+  --glow-halo:        rgba(160, 216, 255, 0.42);
+  --glow-dim:         rgba(160, 216, 255, 0.16);
+
+  /* ── 毛玻璃面板 ── */
+  --glass-bg:         rgba(255, 255, 255, 0.11);
+  --glass-bg-2:       rgba(255, 255, 255, 0.055);
+  --glass-blur:       blur(14px) saturate(1.2);
+  --glass-border:     rgba(220, 239, 255, 0.48);
+  --glass-border-2:   rgba(220, 239, 255, 0.2);
+  --glass-border-flat: rgba(255, 255, 255, 0.22);
+  --glass-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    0 0 14px rgba(160, 216, 255, 0.336),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+  --glass-shadow-2:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+  /* ⚠ 走線彗星與光暈濾鏡的 CSS 變數已經拿掉 —— 那些光現在全部由 WebGL 發光層畫，
+     參數在 glow/params.js（同樣由這支腳本從 FX 產生）。 */
+  /* GLOW-TOKENS:END */
 
   /* 字體：拿掉 Space Grotesk / JetBrains Mono。等寬 HUD 字是舊科幻感的主要來源，
      數字改用系統字 + tabular-nums 對齊。 */
@@ -60,7 +99,6 @@ html, body {
   display: flex;
   flex-direction: column;
   background-color: var(--c-bg);
-  /* 舊版這裡疊了兩層藍光暈 + 46px 格線，全部拿掉：純黑就是新的底。 */
 }
 
 /* ── Top bar ────────────────────────────────────────────────────────────────── */
@@ -69,7 +107,7 @@ html, body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 22px;
   padding-top: max(14px, env(safe-area-inset-top));
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--glow-dim);
 }
 .topbar__brand { display: flex; align-items: center; gap: 12px; }
 .topbar__zone {
@@ -113,31 +151,63 @@ html, body {
   padding: 26px 30px 44px;
   overflow: hidden;
 }
-/* 鎖比例的平面圖舞台 — 背景圖 / 邊 / 節點都用它的 % 定位,確保對齊房間。
-   比例 = floorplan.svg 的 viewBox 1000×680。 */
+/* 平面圖舞台 — 背景圖 / 邊 / 節點都用它的 % 定位,確保對齊房間。
+   ⚠ 比例＝ public/TOP.png 的 1920×1080。照片不能被拉伸,所以這個框的比例
+      必須跟照片一致 —— 兩者一致時 object-fit 用 cover 也不會裁到東西。
+      （之前是 1200×730 的示意 SVG,那時候拉伸沒差,現在有差。） */
 .graph__plan {
   position: relative;
-  aspect-ratio: 1000 / 680;
+  aspect-ratio: 1920 / 1080;
   width: 100%;
   max-width: 100%;
   max-height: 100%;
   margin: auto;
 }
+
+/* ── 俯視照片 ────────────────────────────────────────────────────────────────
+   ⚠ 這是【最底層】(z-index 0)。之前的示意 SVG 幾乎是透明的，所以壓在發光層
+      上面沒關係；換成不透明的渲染圖之後就不行了 —— 圖會把整層光蓋掉。
+      現在順序是：照片(0) → 發光層(1) → 連線 SVG(2) → 白點/卡片。
+
+   邊緣的黑邊：用 mask 把四邊羽化掉，露出底下的 --c-bg。
+   ⚠ 用 mask 而不是疊一層黑色漸層，是因為疊上去的那層會擋住發光層；
+      羽化的是「照片本身」，光仍然可以畫到邊緣。
+   ⚠ 兩個方向的漸層要用 intersect 交集，不然四個角落會只吃到一個方向的羽化。 */
 .graph__bg {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; z-index: 0;
   width: 100%; height: 100%;
-  object-fit: fill;
-  opacity: 0.9;
+  object-fit: cover;
   pointer-events: none;
   user-select: none;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 9%, #000 91%, transparent 100%);
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 9%, #000 91%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
+
+/* ── WebGL 發光層 ────────────────────────────────────────────────────────────
+   牆面那套（Three.js + UnrealBloomPass）的 iPad 版，程式在 glow/。
+   ⚠ 疊在照片【之上】：光要壓在房間上，不是被房間蓋住。
+      canvas 只負責「光」，銳利的東西不要進來 —— 與牆面同一個分層原則。 */
+.glow-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ⚠ 這裡【不要】再掛 drop-shadow 光暈 —— 光已經由 WebGL 的 bloom 畫了。
+   兩套並存會變成「兩種不同的光」，而且每幀重算整張 SVG 濾鏡很貴。
+   這張 SVG 現在只剩 leader（卡片 → 節點的細連接線）。 */
 .graph__edges {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; z-index: 2;
   width: 100%; height: 100%;
   pointer-events: none;
 }
-.edge-core  { stroke: var(--beam); stroke-width: 0.32; stroke-linecap: round; }
-
 
 /* ── Node ───────────────────────────────────────────────────────────────────── */
 .node {
@@ -147,30 +217,42 @@ html, body {
   line-height: 0;
   cursor: default;
   font-family: var(--font-cjk);
+  z-index: 5;
 }
 .node--active { cursor: pointer; }
+/* ⚠ 觸控範圍與視覺大小分開。白點目前只有 6px，那是刻意調小的視覺，
+   但點擊節點會開詳細卡片 —— 6px 的目標在 iPad 上根本按不到（建議 44px 以上）。
+   這一圈是透明的、不影響外觀，只負責接手指。 */
+.node--active::before {
+  content: '';
+  position: absolute; left: 0; top: 0;
+  transform: translate(-50%, -50%);
+  width: 44px; height: 44px; border-radius: 50%;
+}
 /* 子元素一律以 node 原點(=平面圖座標、=連線端點)為中心,確保線真的接到點上 */
 .node__dot {
   position: absolute; left: 0; top: 0;
   transform: translate(-50%, -50%);
-  width: 18px; height: 18px; border-radius: 50%;
+  /* 尺寸走變數。⚠ 真正的設定值在 lib/graphTuning.js 的 DEFAULTS（GraphCanvas 一律把它
+     寫成 inline style），這裡的 fallback 只是變數缺席時的保險。 */
+  width: var(--node-dot-idle, 4px); height: var(--node-dot-idle, 4px); border-radius: 50%;
   background: transparent;
-  border: 1px solid var(--c-border-2);
+  border: 1px solid var(--glow-dim);
   transition: all 0.45s var(--ease);
 }
+/* active＝牆面家電框亮起來的等價物。⚠ 外暈交給 WebGL 發光層（同一顆 bloom），
+   這裡只留銳利的亮芯 —— 兩套光疊起來會糊掉。 */
 .node--active .node__dot {
-  width: 20px; height: 20px;
-  background: var(--c-text);
-  border-color: var(--c-text);
+  width: var(--node-dot, 6px); height: var(--node-dot, 6px);
+  background: var(--glow-core);
+  border-color: var(--glow-rim);
 }
-
-
 
 /* ── Detail panel(點選節點 / 卡片 → 浮出)──────────────────────────────────── */
 .detail-overlay {
   position: absolute; inset: 0; z-index: 30;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(10, 14, 20, 0.55);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .detail__card {
@@ -179,10 +261,31 @@ html, body {
   overflow-y: auto; -webkit-overflow-scrolling: touch;
   display: flex; flex-direction: column; gap: 14px;
   padding: 24px 20px 20px;
-  background: rgba(20, 20, 20, 0.82);
-  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--c-border); border-radius: 18px;
-  box-shadow: var(--shadow-2);
+  /* 與 .acard 同一套玻璃（見那邊的說明）。這一張浮在 detail-overlay 已經壓暗過的
+     畫面上，所以 tint 比卡片淡一些，不然會太悶。 */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    rgba(12, 16, 22, 0.22);
+  backdrop-filter: var(--glass-blur) brightness(0.88);
+  -webkit-backdrop-filter: var(--glass-blur) brightness(0.88);
+  border: 1px solid var(--glass-border); border-radius: 18px;
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.detail__card::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.04) 24%,
+    rgba(255, 255, 255, 0) 44%,
+    rgba(255, 255, 255, 0) 74%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
 }
 .detail__close {
   position: absolute; top: 10px; right: 12px;
@@ -199,9 +302,11 @@ html, body {
 .detail__brace { color: var(--accent-2); font-family: var(--font-hud); }
 .detail__sub { font-family: var(--font-hud); font-size: 11px; color: var(--c-text-dim); letter-spacing: 0.1em; }
 
+/* 面板【內】的卡片：只取玻璃的次層值，不再疊一次外緣光暈 ——
+   兩層都發光的話面板會整片糊掉（牆面同理，一塊玻璃只有一圈 rim）。 */
 .dcard {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border-2);
   border-radius: 14px;
   padding: 14px 15px;
 }
@@ -220,7 +325,7 @@ html, body {
 .cumul__head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
 .cumul__target { margin-left: auto; font-family: var(--font-hud); font-size: 11px; color: var(--c-text-dim); }
 .cumul__bar { height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-.cumul__fill { height: 100%; border-radius: 4px; background: var(--c-text); }
+.cumul__fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--glow-beam), var(--glow-core)); box-shadow: 0 0 8px rgba(160, 216, 255, 0.5); }
 .cumul__meta { display: flex; justify-content: space-between; margin-top: 7px; font-family: var(--font-hud); font-size: 11px; color: var(--c-text-dim); }
 .cumul__pct { color: var(--accent-2); }
 
@@ -233,13 +338,16 @@ html, body {
 .maint__status--ok { color: var(--c-text-dim); }
 .maint__status--warn { color: var(--c-bg); background: var(--c-text); font-weight: 600; }
 
-/* ── Idle detail ────────────────────────────────────────────────────────────── */
+/* ── Leader 線（SVG, viewBox 0..100, 非等比）──────────────────────────────────
+   leader＝卡片 → 節點的細連接線。這不是「光」，所以留在 SVG。
+   ⚠ .hub-beam / .edge-core 已經移除 —— 中樞光束與關聯邊改由 WebGL 發光層畫，
+      連「射向中樞」的 draw-in 都是 shader 的 uProgress 在做。 */
+.leader { stroke: var(--glow-dim); stroke-width: 0.13; stroke-linecap: round; transition: stroke 0.4s var(--ease), stroke-width 0.4s var(--ease); }
+.leader--active { stroke: var(--glow); stroke-width: 0.2; }
 
-/* ── Leader 線 / 神經網 / 中樞光束(SVG, viewBox 0..100, 非等比)──────────────── */
-.leader { stroke: var(--c-border); stroke-width: 0.13; stroke-linecap: round; transition: stroke 0.4s var(--ease), stroke-width 0.4s var(--ease); }
-.leader--active { stroke: var(--accent); stroke-width: 0.2; }
-.hub-beam { stroke: var(--beam); stroke-width: 0.3; stroke-linecap: round; opacity: 0.8; }
-.hub-beam--linked { stroke: var(--highlight); }
+/* ⚠ 彗星拖尾與底光呼吸已經全部搬進 WebGL 發光層（glow/）——
+   CSS 版的 .ct-* / .beam-comet / beam-breathe 都拿掉了。
+   兩套並存的話畫面上會同時有 bloom 的光與 drop-shadow 的光，那是兩種質感。 */
 
 /* ── 中央 AI 大腦中樞 ─────────────────────────────────────────────────────────── */
 .hub { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 6; }
@@ -249,10 +357,16 @@ html, body {
      二來跟家電節點（實心點）在形狀上就分得開 —— 三端的中樞都是一圈 hairline。 */
   width: 46px; height: 46px; border-radius: 50%;
   background: transparent;
-  border: 1px solid var(--c-border-2);
-  transition: border-color 0.4s var(--ease);
+  border: 1px solid var(--glow-dim);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease), background 0.4s var(--ease);
 }
-.hub--awake .hub__core { border-color: var(--c-text); }
+/* 核心框：跟牆面的 hubIdle = 0 一樣，沒感應時完全不發光，有卡就亮起來。
+   ⚠ 外暈交給 WebGL 發光層，這裡只留邊框與一點內霧光。 */
+.hub--awake .hub__core {
+  border-color: var(--glow-rim);
+  background: rgba(160, 216, 255, 0.06);
+  box-shadow: inset 0 0 12px rgba(160, 216, 255, 0.12);
+}
 .hub__label {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
   font-family: var(--font-cjk); font-size: 10px; line-height: 1.15; font-weight: 500;
@@ -265,26 +379,68 @@ html, body {
   position: absolute; transform: translateY(-50%); z-index: 7;
   display: flex; align-items: center; gap: 9px;
   width: 13%; padding: 8px 10px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border); border-radius: 12px;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  /* ── 真玻璃 ──────────────────────────────────────────────────────────────
+     卡片壓在俯視照片上，所以 backdrop-filter 真的有東西可以糊 —— 那是「透出下面
+     的房間」的來源，不要拿掉。除了模糊之外還做了三件事，少任何一件都會退回
+     「半透明色塊」而不是玻璃：
+       1. backdrop 加 brightness/saturate —— 玻璃會把背後的東西壓暗一點、彩度提一點
+       2. 一層很淡的深色 tint（不是純白）—— 照片亮的地方（木地板、燈光）
+          直接透上來會把白字吃掉，這層負責保住可讀性
+       3. ::after 的斜向高光 —— 玻璃的鏡面反射，這是「看起來是一片玻璃」的關鍵
+     ⚠ 圓角要跟 ::after 一致，不然高光會溢出圓角。
+     ⚠ 這裡【不要】寫 position —— 上面已經是 absolute（版面靠它定位），
+        在同一條規則裡再寫 relative 會蓋掉它，卡片會整排掉回文件流擠在左邊。 */
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)),
+    rgba(12, 16, 22, 0.34);
+  border: 1px solid var(--glass-border-2); border-radius: 12px;
+  backdrop-filter: var(--glass-blur) brightness(0.82) contrast(1.05);
+  -webkit-backdrop-filter: var(--glass-blur) brightness(0.82) contrast(1.05);
   text-align: left; cursor: default; font-family: var(--font-cjk);
-  box-shadow: var(--shadow-1);
+  box-shadow:
+    var(--glass-shadow-2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);   /* 下緣暗邊＝玻璃的厚度 */
   transition: border-color 0.4s var(--ease), background 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+/* 斜向鏡面高光。⚠ pointer-events: none —— 卡片是 <button>，這層不能吃掉點擊。 */
+.acard::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.05) 26%,
+    rgba(255, 255, 255, 0) 46%,
+    rgba(255, 255, 255, 0) 72%,
+    rgba(255, 255, 255, 0.07) 100%
+  );
 }
 .acard--l { left: 2%; }
 .acard--r { right: 2%; flex-direction: row-reverse; text-align: right; }
-.acard--active { cursor: pointer; border-color: var(--accent);
-  background: var(--c-surface-2);
-  box-shadow: var(--shadow-1); }
+/* active：玻璃更亮一階 + 淡藍高光邊 + 外緣光暈。tint 同時壓淡，讓房間透更多上來。 */
+.acard--active {
+  cursor: pointer;
+  border-color: var(--glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    rgba(12, 16, 22, 0.26);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
 .acard__icon {
   flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--c-border);
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border-2);
   transition: all 0.4s var(--ease);
 }
+/* 圖示＝縮小版的彗星：白芯 → 青 → 深藍，三階與 FX.color 的 head/body/tail 一致。 */
 .acard--active .acard__icon {
-  background: radial-gradient(circle, var(--highlight), var(--accent-2) 60%, var(--accent));
-  border-color: var(--accent); box-shadow: var(--shadow-1);
+  background: radial-gradient(circle, var(--glow-core), var(--glow-beam) 55%, var(--glow-deep));
+  border-color: var(--glow-rim);
+  box-shadow: 0 0 10px rgba(160, 216, 255, 0.55);
 }
 .acard__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .acard__name { font-size: 13px; letter-spacing: 0.04em; color: var(--c-text-mute); transition: color 0.4s var(--ease); }
@@ -299,12 +455,12 @@ html, body {
 .complete {
   position: absolute; inset: 0; z-index: 20;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(10, 14, 20, 0.82);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   pointer-events: none;
 }
 .complete__inner { text-align: center; padding: 0 8%; }
-.complete__kicker { font-family: var(--font-hud); font-size: 12px; letter-spacing: 0.4em; color: var(--accent-2); margin-bottom: 14px; }
+.complete__kicker { font-family: var(--font-hud); font-size: 12px; letter-spacing: 0.4em; color: var(--glow); margin-bottom: 14px; text-shadow: 0 0 12px rgba(160, 216, 255, 0.55); }
 .complete__title { font-family: var(--font-cjk); font-size: 30px; letter-spacing: 0.06em; color: var(--c-text); margin-bottom: 12px; }
 .complete__sub { font-size: 15px; line-height: 1.9; color: var(--c-text-mute); max-width: 520px; margin: 0 auto; }
 
@@ -316,7 +472,7 @@ html, body {
   .detail {
     flex: 0 0 38%;
     border-left: none;
-    border-top: 1px solid var(--c-border);
+    border-top: 1px solid var(--glow-dim);
   }
   .detail__card { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
   .detail__title { flex: 1 1 100%; }
@@ -415,24 +571,114 @@ html, body {
   gap: 7px;
   padding: 9px 15px 9px 13px;
   border-radius: 999px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
+  border: 1px solid var(--glass-border-2);
+  background: var(--glass-bg-2);
   color: var(--c-text-mute);
   font-family: var(--font-cjk);
   font-size: 13px;
   letter-spacing: 0.12em;
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   opacity: 0.5;
   transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 .reset-btn:hover,
 .reset-btn:active {
   opacity: 1;
-  border-color: var(--c-border-2);
-  background: var(--c-surface-2);
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
   color: var(--c-text);
 }
 .reset-btn__icon { font-size: 16px; line-height: 1; }
 .reset-btn__text { font-weight: 600; }
+
+
+/* ── 調參面板（鍵盤 e）───────────────────────────────────────────────────────
+   暫時性的開發工具，不是展場的一部分。展場的 iPad 沒有實體鍵盤，開不起來。
+   ⚠ 這一整段連同 components/GraphTuner.jsx、lib/graphTuning.js 都可以整組刪掉，
+      刪掉之後 GraphCanvas 只要拿掉那幾行 import 與 <GraphTuner> 就好。 */
+.tuner {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  z-index: 200;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-radius: 14px;
+  background: rgba(18, 22, 28, 0.92);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: var(--c-text);
+  font-family: var(--font-cjk);
+  font-size: 13px;
+}
+.tuner__head { display: flex; align-items: center; gap: 8px; }
+.tuner__head strong { font-size: 14px; letter-spacing: 0.06em; }
+.tuner__hint { margin-left: auto; color: var(--c-text-dim); font-size: 11px; }
+.tuner__x {
+  width: 22px; height: 22px; border: 0; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08); color: var(--c-text-mute);
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
+.tuner__row { display: grid; grid-template-columns: 1fr; gap: 3px; }
+.tuner__label { color: var(--c-text-mute); font-size: 12px; }
+.tuner__row input[type='range'] { width: 100%; accent-color: var(--glow); }
+.tuner__val {
+  color: var(--glow); font-size: 11px;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
+.tuner__note { color: var(--c-text-dim); font-size: 11px; line-height: 1.6; margin-top: 2px; }
+.tuner__foot { display: flex; gap: 8px; margin-top: 2px; }
+.tuner__foot button {
+  flex: 1; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid var(--glass-border-2);
+  background: var(--glass-bg-2); color: var(--c-text);
+  font-family: inherit; font-size: 12px; cursor: pointer;
+}
+.tuner__foot button:hover { background: var(--glass-bg); border-color: var(--glass-border); }
+
+/* 拖曳把手 —— 疊在節點與中樞上，只有面板開著時存在 */
+.tuner-handles { position: absolute; inset: 0; z-index: 150; }
+.tuner-grip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 30px; height: 30px;
+  padding: 0; border-radius: 50%;
+  border: 1px dashed var(--glow);
+  background: rgba(160, 216, 255, 0.14);
+  cursor: grab;
+  touch-action: none;   /* 不然拖曳會被瀏覽器當成捲動 */
+}
+.tuner-grip:active { cursor: grabbing; background: rgba(160, 216, 255, 0.3); }
+.tuner-grip span {
+  position: absolute; left: 50%; top: calc(100% + 3px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px; color: var(--glow);
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+.tuner-grip--hub { width: 40px; height: 40px; border-style: solid; }
+
+/* 面板開著時把游標叫回來（kiosk 平常是 default，這裡只是保險） */
+.graph__plan--tuning { cursor: default; }
+
+.tuner-badge {
+  position: absolute;
+  left: 8px; bottom: 6px;
+  z-index: 150;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(18, 22, 28, 0.8);
+  border: 1px solid var(--glass-border-2);
+  color: var(--glow);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}

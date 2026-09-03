@@ -1,52 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" fill="none">
-  <!-- 假平面圖 — 示意用。等真實渲染圖到位後換掉此檔 + 調 appliances.js 的 pos。 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 730" fill="none">
+  <!-- 室內平面 — 玄關／儲藏室／次臥（左側直排）、客廳＋餐廳（上排）、
+       客房／衛浴／主臥（下排）。
+
+       ⚠ 上排與下排的分隔線 y=406 是【貫穿整戶】的一條線 —— 左排的
+         儲藏室｜次臥 也切在同一個高度。四間下排房間（次臥／客房／衛浴／主臥）
+         的天花線因此對齊，標籤也一律擺 y=490。動其中一段就要四段一起動。
+
+       ⚠ viewBox 1200×730 要與 style.css 的 .graph__plan aspect-ratio 一致。
+         .graph__bg 是 object-fit: fill，SVG 會被拉伸填滿容器；容器在橫向 iPad 上
+         約 1.62，這裡的 1.644 幾乎相同，所以隔間比例不會歪。
+
+       ⚠ 左右各有一排家電卡片壓在平面圖上（.acard 佔 2%–15% 與 85%–98%）。
+         所以左側直排那三間的「文字與節點」一律靠右擺（x≈246，＝容器的 20.5%），
+         不要放在房間正中央 —— 那會被卡片蓋住。房間框本身壓到沒關係，
+         卡片是半透明毛玻璃，底下的線還看得見。 -->
   <defs>
     <style>
       /* ⚠ 這個檔案是用 &lt;img&gt; 載入的（GraphCanvas），外部 CSS 完全打不到，
          所以配色必須寫在檔案裡。要換色改這裡，不是改 style.css。
-         極簡版：全部白色不同透明度的 hairline，牆比隔間亮一階、窗最亮。 */
+         全部白色不同透明度的 hairline，牆比隔間亮一階、窗最亮。 */
       .wall   { stroke: rgba(255,255,255,0.28); stroke-width: 1.5; }
       .inner  { stroke: rgba(255,255,255,0.14); stroke-width: 1; }
       .win    { stroke: rgba(255,255,255,0.45); stroke-width: 1.5; }
       .floor  { fill: rgba(255,255,255,0.015); }
       .floor2 { fill: rgba(255,255,255,0.03); }
-      .lbl    { fill: rgba(255,255,255,0.30); font-family: -apple-system, 'Chiron Hei HK', 'PingFang TC', sans-serif; font-size: 20px; letter-spacing: 2px; }
+      .lbl    { fill: rgba(255,255,255,0.30); font-family: -apple-system, 'Chiron Hei HK', 'PingFang TC', sans-serif; font-size: 24px; letter-spacing: 2px; }
       .door   { stroke: rgba(255,255,255,0.14); stroke-width: 1; }
     </style>
   </defs>
 
-  <!-- 外牆 -->
-  <rect x="40" y="40" width="920" height="600" rx="6" class="wall floor"/>
+  <!-- 外牆（內容區 48,24 → 1152,706）-->
+  <rect x="48" y="24" width="1104" height="682" rx="6" class="wall floor"/>
 
-  <!-- 陽台(上方) -->
-  <rect x="120" y="40" width="500" height="78" class="inner floor2"/>
-  <line x1="120" y1="42" x2="620" y2="42" class="win"/>
-  <text x="320" y="86" text-anchor="middle" class="lbl">陽 台</text>
+  <!-- 房間底色：交錯上一階，讓相鄰空間分得開 -->
+  <rect x="48"  y="24"  width="265" height="203" class="floor2"/><!-- 玄關 -->
+  <rect x="48"  y="406" width="265" height="300" class="floor2"/><!-- 次臥 -->
+  <rect x="766" y="24"  width="386" height="382" class="floor2"/><!-- 餐廳 -->
+  <rect x="612" y="406" width="154" height="300" class="floor2"/><!-- 衛浴 -->
 
-  <!-- 廚房(左上) -->
-  <rect x="40" y="118" width="270" height="190" class="inner floor2"/>
-  <text x="175" y="220" text-anchor="middle" class="lbl">廚 房</text>
+  <!-- 內牆 -->
+  <line x1="313" y1="24"  x2="313" y2="706" class="inner"/><!-- 左排 | 客廳‧客房 -->
+  <line x1="766" y1="24"  x2="766" y2="706" class="inner"/><!-- 客廳 | 餐廳、更衣間 | 主臥 -->
+  <line x1="612" y1="406" x2="612" y2="706" class="inner"/><!-- 客房 | 衛浴 -->
+  <line x1="48"  y1="227" x2="313" y2="227" class="inner"/><!-- 玄關 | 儲藏室 -->
+  <line x1="48"  y1="406" x2="1152" y2="406" class="inner"/><!-- 上排 | 下排：貫穿整戶，儲藏室 | 次臥 也在這條上 -->
 
-  <!-- 客餐廳(中央) -->
-  <rect x="310" y="118" width="330" height="300" class="inner"/>
-  <text x="475" y="290" text-anchor="middle" class="lbl">客 餐 廳</text>
+  <!-- 大門（玄關左外牆）+ 開門弧 -->
+  <line x1="48" y1="110" x2="48" y2="180" class="win"/>
+  <path d="M48 180 A70 70 0 0 0 118 110" class="door"/>
 
-  <!-- 主臥(右上) -->
-  <rect x="640" y="118" width="320" height="300" class="inner floor2"/>
-  <text x="800" y="280" text-anchor="middle" class="lbl">主 臥</text>
+  <!-- 採光窗（上方外牆）—— 窗簾節點就掛在客廳這一段窗邊 -->
+  <line x1="380" y1="26"  x2="720"  y2="26" class="win"/>
+  <line x1="830" y1="26"  x2="1100" y2="26" class="win"/>
 
-  <!-- 玄關(左下) -->
-  <rect x="40" y="460" width="270" height="180" class="inner floor2"/>
-  <text x="175" y="560" text-anchor="middle" class="lbl">玄 關</text>
-  <!-- 大門 + 開門弧 -->
-  <line x1="40" y1="560" x2="40" y2="620" class="win"/>
-  <path d="M40 620 A60 60 0 0 0 100 560" class="door"/>
-
-  <!-- 衛浴(中下) -->
-  <rect x="310" y="418" width="220" height="222" class="inner floor2"/>
-  <text x="420" y="540" text-anchor="middle" class="lbl">衛 浴</text>
-
-  <!-- 次臥(右下) -->
-  <rect x="530" y="418" width="430" height="222" class="inner"/>
-  <text x="745" y="540" text-anchor="middle" class="lbl">次 臥</text>
+  <!-- 房間標籤。左排三間靠右擺（見檔頭說明）；其餘擺各自空間的上半部，
+       下半部留給家電節點，兩者才不會疊在一起。 -->
+  <text x="246" y="110" text-anchor="middle" class="lbl">玄 關</text>
+  <text x="246" y="300" text-anchor="middle" class="lbl">儲 藏 室</text>
+  <text x="246" y="490" text-anchor="middle" class="lbl">次 臥</text>
+  <text x="500" y="140" text-anchor="middle" class="lbl">客 廳</text>
+  <text x="959" y="140" text-anchor="middle" class="lbl">餐 廳</text>
+  <text x="462" y="490" text-anchor="middle" class="lbl">客 房</text>
+  <text x="689" y="490" text-anchor="middle" class="lbl">衛 浴</text>
+  <text x="959" y="490" text-anchor="middle" class="lbl">主 臥</text>
 </svg>

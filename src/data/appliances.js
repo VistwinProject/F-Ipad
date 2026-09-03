@@ -4,17 +4,22 @@
 // (對齊牆面 F-wall/src/config/appliances.js 的 status.code:
 //  HRV-02 / AC-07 / DH-01 / AP-06 / SEN-09 / LT-03 / PG-04 / CT-05 / BF-08)
 //
-// pos = 知識圖譜上的節點座標,正規化 0..1(x 右為正、y 下為正)。
-// ⚠️ 目前是「均衡圖譜佈局」placeholder。等拿到空間平面渲染圖 + 各家電實際位置後,
-//    只要改這裡的 pos(或之後改成讀平面圖座標),其餘程式不用動。
-//    若要疊平面圖,把圖片放 public/floorplan.png 並在 App 開啟 background。
+// pos = 節點在平面圖上的座標,正規化 0..1(x 右為正、y 下為正)。
+// 對應 public/TOP.png（1920×1080 俯視渲染圖）—— 換算是 pos.x = 圖上的 x / 1920。
+// 平面圖換版時這裡要一起改,不然節點會落在錯的房間。
+// （public/floorplan.svg 是上一版的示意隔間圖,已經沒有程式在引用,留著當參考。）
+//
+// ⚠️ 左右各有一排家電卡片壓在平面圖上(.acard 佔容器的 2%–15% 與 85%–98%),
+//    所以 pos.x 一律落在 0.20–0.80 之間,節點才不會被卡片蓋掉。
+//    左側直排那三間(玄關/儲藏室/次臥)的房間框有一半在卡片底下,
+//    節點因此靠右擺在 x=0.205(＝ viewBox 246),那是那三間露出來的地方。
 
 export const APPLIANCES = [
   {
     id: 'hrv',
     label: '新風機',
     sub: '全熱交換機',
-    pos: { x: 0.8, y: 0.22 },
+    pos: { x: 0.2585, y: 0.4903 }, // 儲藏室 — 全熱交換主機吊在儲藏室天花
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -31,7 +36,7 @@ export const APPLIANCES = [
     id: 'ac',
     label: '冷氣',
     sub: '空調系統',
-    pos: { x: 0.56, y: 0.22 },
+    pos: { x: 0.3253, y: 0.3637 }, // 客廳 — 主空間空調
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -48,7 +53,7 @@ export const APPLIANCES = [
     id: 'curtain',
     label: '窗簾',
     sub: '電動窗簾',
-    pos: { x: 0.37, y: 0.12 },
+    pos: { x: 0.6556,  y: 0.1277 }, // 客廳窗邊 — 貼上方外牆的採光窗
     detail: {
       metric: '啟閉次數',
       unit: '次',
@@ -64,7 +69,7 @@ export const APPLIANCES = [
     id: 'socket',
     label: '智慧插座',
     sub: '智慧電力監測',
-    pos: { x: 0.74, y: 0.76 },
+    pos: { x: 0.2078, y: 0.6609 }, // 次臥 — 書桌側電力監測
     detail: {
       metric: '負載功率',
       unit: 'W',
@@ -80,7 +85,7 @@ export const APPLIANCES = [
     id: 'purifier',
     label: '空氣清淨機',
     sub: '空氣淨化',
-    pos: { x: 0.36, y: 0.53 },
+    pos: { x: 0.2933, y: 0.7853 }, // 客房
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -97,7 +102,7 @@ export const APPLIANCES = [
     id: 'light',
     label: '燈',
     sub: '智慧照明',
-    pos: { x: 0.475, y: 0.4 },
+    pos: { x: 0.2806, y: 0.2202 }, // 玄關 — 感應照明
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -113,7 +118,7 @@ export const APPLIANCES = [
     id: 'dehum',
     label: '除濕機',
     sub: '除濕系統',
-    pos: { x: 0.1, y: 0.82 },
+    pos: { x: 0.6282, y: 0.7053 }, // 主臥 — 臥室除濕
     detail: {
       metric: '用電量',
       unit: 'kWh',
@@ -130,7 +135,7 @@ export const APPLIANCES = [
     id: 'bathfan',
     label: '浴室暖風機',
     sub: '浴室暖風乾燥',
-    pos: { x: 0.2, y: 0.6 },
+    pos: { x: 0.5005, y: 0.839 }, // 衛浴
     detail: {
       metric: '運轉時數',
       unit: 'hr',
@@ -147,7 +152,7 @@ export const APPLIANCES = [
     id: 'sensor',
     label: '12合一感測器',
     sub: '12合一環境感測',
-    pos: { x: 0.46, y: 0.82 },
+    pos: { x: 0.783, y: 0.356 }, // 餐廳
     detail: {
       metric: '偵測次數',
       unit: '次',
