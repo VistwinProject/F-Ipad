@@ -159,7 +159,10 @@ export default function GraphCanvas({ activeIds, allLinked, onPick }) {
       {/* 俯視渲染圖。⚠ 疊在【最底層】(z-index 0),發光層在它之上 ——
           換成實拍/渲染圖之後如果沿用舊的層級(圖在上、canvas 在下),
           那張不透明的圖會把整層光蓋掉。 */}
-      <img className="graph__bg" src="/TOP.png" alt="" draggable="false" />
+      {/* ⚠ 要用 BASE_URL 串，不能寫死 "/TOP.png"：部署到子路徑時
+          （GitHub Pages 的專案站是 /F-Ipad/）絕對路徑會 404。
+          dev 時 BASE_URL 是 "/"，build 時是 vite.config 的 base。 */}
+      <img className="graph__bg" src={`${import.meta.env.BASE_URL}TOP.png`} alt="" draggable="false" />
 
       <svg className="graph__edges" viewBox="0 0 100 100" preserveAspectRatio="none">
         {/* leader:周邊卡片 → 節點 */}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { attachSimKeys } from '../shared/simKeys.js'
+import { socketClass } from '../shared/demoSocket.js'
 
 // ── WS endpoint ───────────────────────────────────────────────────────────────
 // 依 F 區 SYNC-SPEC：WS server 固定 listen :8787,跑在「接 NFC reader 的那台 PC」。
@@ -82,7 +83,9 @@ export function useNfcSync() {
       try { wsRef.current.close() } catch (_) {}
     }
     setStatus('connecting')
-    const ws = new WebSocket(WS_URL)
+    // ?demo → 假 server（見 shared/demoSocket.js）。靜態部署時沒有真的
+    // ws://<host>:8787，而且 HTTPS 頁面連 ws:// 會被瀏覽器直接擋掉。
+    const ws = new (socketClass())(WS_URL)
     wsRef.current = ws
 
     ws.onopen = () => {
