@@ -2,3 +2,11 @@ node_modules/
 dist/
 *.local
 .DS_Store
+
+F2.0/node_modules/
+F2.0/dist/
+F2.0/server/uid-map.json
+F2.0/server/reader-map.json
+.env
+.env.*
+.DS_Store
