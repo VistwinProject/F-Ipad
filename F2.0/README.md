@@ -4,6 +4,12 @@
 初代僅作為畫面、固定投影座標、設備 ID、示範內容及圖片素材的依據。
 先前誤複製的三份專案已移到 `_initial-copy/`，新程式不匯入其中任何程式。
 
+## Windows 展場一鍵啟動
+
+請見 [Windows 展場安裝與操作](Windows展場安裝與操作.md)。第一次執行 `Install-F.cmd` 安裝依賴、指定兩個延伸螢幕並建立桌面捷徑；之後雙擊 **F Zone** 或 `Start-F.cmd` 開啟 Table／Wall。iPad 連到同一主機後按「重置」，即可清除本輪、停止語音，讓 Table 回首頁、Wall 回待機。
+
+同步重置驗證：`node --test tests/exhibition-reset.test.mjs`。
+
 ## 啟動與預覽
 
 在此資料夾執行 `npm install`，再執行 `npm start`。
@@ -58,7 +64,7 @@
 ## 實體 NFC
 
 先安裝 PC/SC 與 `npm install nfc-pcsc`，依現場讀卡機名稱建立 `server/reader-map.json`，
-再執行 `npm run live`。此模式不啟用模擬卡片，也不允許牆面送控制訊息。
+再執行 `npm run live`。正式展演需加入 `--no-sim`（Windows 啟動器已自動加入），才會停用模擬卡片與牆面控制訊息。
 已登記的五張 UID 存於 `server/uid-map.json`；另外四台需由現場登記真實 UID。
 保留原始六種事件的欄位，`tag-remove` 只有 `slot_index`；新增 snapshot 事件用於重連恢復。
 
